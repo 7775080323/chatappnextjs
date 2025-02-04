@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const authAPI = createApi({
   reducerPath: 'auth', // This key is used in store
-  baseQuery: fetchBaseQuery({ baseUrl: 'http://localhost:3000/api' }),
+  baseQuery: fetchBaseQuery({ baseUrl: 'http://localhost:5000/api' }),
   endpoints: (builder) => ({
     register: builder.mutation({
       query: (userData) => ({
