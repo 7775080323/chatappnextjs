@@ -5,17 +5,6 @@ import { ToggleProps } from "@/types";
 type PropTypes = ToggleProps;
 
 const Nav = ({ toggleSidebar }: PropTypes) => {
-  // Click handlers for audio and video call buttons
-  const handleVideoCall = () => {
-    console.log("Starting Video Call...");
-    // Add your video call logic here (WebRTC, etc.)
-  };
-
-  const handleAudioCall = () => {
-    console.log("Starting Audio Call...");
-    // Add your audio call logic here (WebRTC, etc.)
-  };
-
   return (
     <nav className="h-[96px] absolute top-0 left-0 lg:left-[320px] right-0 bg-[#1F1D1D] flex items-center justify-between px-4">
       <div className="flex items-center gap-4">
@@ -26,8 +15,6 @@ const Nav = ({ toggleSidebar }: PropTypes) => {
           <h2 className="text-white text-xl font-semibold capitalize">Prerna</h2>
         </div>
       </div>
-
-      
 
       <Toggle toggleSidebar={toggleSidebar} />
     </nav>

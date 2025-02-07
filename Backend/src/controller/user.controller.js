@@ -12,95 +12,51 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_validator_1 = require("express-validator");
-const bcrypt_1 = __importDefault(require("bcrypt"));
+exports.loginUser = exports.registerUser = void 0;
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const user_model_1 = __importDefault(require("../model/user.model"));
+const user_model_1 = __importDefault(require("../model/user.model")); // Ensure you have a User model
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-class User {
-    // Register handler
-    register(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log(req, "request to register user");
-            const errors = (0, express_validator_1.validationResult)(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({ errors: errors.array() });
-            }
-            const { name, email, password } = req.body;
-            try {
-                const existingUser = yield user_model_1.default.findOne({ email });
-                if (existingUser) {
-                    return res.status(400).json({ error: "Email is already taken" });
-                }
-                // Hashing password
-                const salt = yield bcrypt_1.default.genSalt(10);
-                const hashedPassword = yield bcrypt_1.default.hash(password, salt);
-                // Creating user
-                const newUser = new user_model_1.default({
-                    name,
-                    email,
-                    password: hashedPassword,
-                });
-                console.log("new user ", newUser);
-                try {
-                    const result = yield newUser.save();
-                    console.log(result, "result from new user");
-                }
-                catch (err) {
-                    console.log("error craeting user");
-                }
-                newUser.password = "";
-                return res.status(201).json({
-                    message: "Your account has been created successfully",
-                    user: newUser,
-                });
-            }
-            catch (error) {
-                console.error("Registration error:", error);
-                return res.status(500).json({ error: "Internal server error" });
-            }
-        });
+const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { name, email, password } = req.body;
+        // Check if user already exists
+        const existingUser = yield user_model_1.default.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: "User already exists" });
+        }
+        // Hash password
+        const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
+        // Create new user
+        const newUser = new user_model_1.default({ name, email, password: hashedPassword });
+        yield newUser.save();
+        res.status(201).json({ success: true, message: "User registered successfully" });
     }
-    // Login handler
-    login(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log("Incoming login request", req.body);
-            const errors = (0, express_validator_1.validationResult)(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({ errors: errors.array() });
-            }
-            try {
-                const { email, password } = req.body;
-                const user = yield user_model_1.default.findOne({ email });
-                if (!user) {
-                    console.log("User not found");
-                    return res.status(404).json({ error: "User not found" });
-                }
-                const passwordMatch = yield bcrypt_1.default.compare(password, user.password);
-                if (!passwordMatch) {
-                    console.log("Incorrect password attempt");
-                    return res.status(400).json({ error: "Incorrect password" });
-                }
-                if (!process.env.JWT_SECRET) {
-                    console.error("JWT_SECRET missing");
-                    return res.status(500).json({ error: "Internal server error" });
-                }
-                const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT_SECRET, {
-                    expiresIn: "7d",
-                });
-                console.log("Generated token:", token);
-                res.cookie("chatUser", token, {
-                    maxAge: 1000 * 60 * 60 * 24 * 7,
-                    httpOnly: true,
-                });
-                return res.status(200).json({ message: "Login successful", token });
-            }
-            catch (error) {
-                console.error("Login error:", error);
-                return res.status(500).json({ error: "Internal server error" });
-            }
-        });
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
-}
-exports.default = new User();
+});
+exports.registerUser = registerUser;
+const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, password } = req.body;
+        // Check if user exists
+        const user = yield user_model_1.default.findOne({ email });
+        if (!user)
+            return res.status(400).json({ message: "User not found!" });
+        // Compare passwords
+        const isMatch = yield bcryptjs_1.default.compare(password, user.password);
+        if (!isMatch)
+            return res.status(400).json({ message: "Invalid credentials" });
+        // Generate JWT Token
+        const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        res.status(200).json({ token, user: { id: user._id, name: user.name, email: user.email } });
+    }
+    catch (error) {
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+exports.loginUser = loginUser;

@@ -1,4 +1,4 @@
-import { FunctionComponent, SetStateAction } from "react"
+
 import ConversationsList from "./ConversationsList"
 import Search from "./Search"
 import Toggle from "./Toggle"
@@ -14,9 +14,7 @@ const Conversation = ({sidebar, toggleSidebar}: PropTypes) => {
       <div className="ml-4 mt-3">
         <Toggle toggleSidebar={toggleSidebar} />
       </div>
-        <Search setSearchQuery={function (value: SetStateAction<string>): void {
-        throw new Error("Function not implemented.")
-      } } />
+        <Search />
         <ConversationsList />
     </div>
   )

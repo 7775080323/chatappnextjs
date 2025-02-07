@@ -1,24 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useLoginMutation } from "@/store/services/authService"; // Use correct mutation
-import { useRouter } from "next/navigation"; 
 
-const Page = () => {
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+const Login = () => {
   const router = useRouter();
 
-  // State for form fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({
-    email: "",
-    password: "",
-  });
+  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Use the login mutation hook for making API requests
-  const [login, { isLoading }] = useLoginMutation();
-
-  // Redirect logged-in users away from login page
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (token) {
@@ -26,45 +20,52 @@ const Page = () => {
     }
   }, [router]);
 
-  // Handle form submission
+  const validateForm = () => {
+    const newErrors = { email: "", password: "" };
+
+    if (!email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Invalid email format";
+
+    if (!password) newErrors.password = "Password is required";
+    else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every((err) => err === "");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-  // Validation function
-const validateForm = () => {
-  const newErrors = { email: "", password: "" };
+    setLoading(true);
+    setErrorMessage("");
 
-  if (!email) newErrors.email = "Email is required";
-  else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email address is invalid";
+    try {
+      const response = await fetch("http://localhost:5000/api/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-  if (!password) newErrors.password = "Password is required";
-  else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials");
+      }
 
-  setErrors(newErrors);
-  return newErrors;
-};
-
-  try {
-    // Make the login request with .unwrap() to properly handle errors
-    const response = await login({ email, password }).unwrap();
-
-    if (response?.token) {
-      localStorage.setItem("authToken", response.token); // Store token
+      localStorage.setItem("authToken", data.token);
       alert("Login successful!");
-      router.push("/"); // Redirect user to dashboard
-    } else {
-      setErrors((prevErrors) => ({ ...prevErrors, email: "Invalid email or password" }));
+      router.push("/");
+    } catch (error: unknown) {
+      // Type narrowing to ensure we handle the error properly
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (err: any) {
-    console.error("Login Error:", err);
-
-    const errorMessage =
-      err?.data?.message || "Something went wrong. Please try again.";
-
-    setErrors((prevErrors) => ({ ...prevErrors, email: errorMessage }));
-  }
-};
-   
+  };
 
   return (
     <div className="flex">
@@ -73,11 +74,10 @@ const validateForm = () => {
         <form className="w-[90%]" onSubmit={handleSubmit}>
           <h1 className="text-xl font-semibold text-white capitalize mb-8">Signin</h1>
 
-          {/* Email field */}
+          {/* Email Input */}
           <div className="mt-6">
             <input
               type="email"
-              name="email"
               placeholder="Email..."
               className="w-full h-14 rounded-lg outline-none px-4 bg-[#312F2F] text-white"
               value={email}
@@ -86,11 +86,10 @@ const validateForm = () => {
             {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
           </div>
 
-          {/* Password field */}
+          {/* Password Input */}
           <div className="mt-6">
             <input
               type="password"
-              name="password"
               placeholder="Enter Password..."
               className="w-full h-14 rounded-lg outline-none px-4 bg-[#312F2F] text-white"
               value={password}
@@ -99,28 +98,28 @@ const validateForm = () => {
             {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
           </div>
 
-          {/* Login button */}
+          {/* Error Message */}
+          {errorMessage && <p className="text-red-500 mt-4">{errorMessage}</p>}
+
+          {/* Submit Button */}
           <div className="mt-6">
             <button
               type="submit"
-              className="w-full block cursor-pointer bg-[#00FF38] text-black text-lg font-semibold capitalize h-14 px-4 rounded-lg"
-              disabled={isLoading} // Disable button when submitting
+              className="w-full block bg-[#00FF38] text-black text-lg font-semibold capitalize h-14 px-4 rounded-lg"
+              disabled={loading}
             >
-              {isLoading ? "Logging in..." : "Login"}
+              {loading ? "Logging in..." : "Login"}
             </button>
           </div>
 
-          {/* Link to signup */}
-          <Link
-            href="/auth/signup"
-            className="inline-block mt-4 text-zinc-400 font-semibold hover:text-white focus:text-white"
-          >
-            Don't have an account?
+          {/* Signup Link */}
+          <Link href="/auth/signup" className="inline-block mt-4 text-zinc-400 font-semibold hover:text-white">
+            Don&apos;t have an account?
           </Link>
         </form>
       </div>
     </div>
   );
-}
+};
 
-export default Page;
+export default Login;

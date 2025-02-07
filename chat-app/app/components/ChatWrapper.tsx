@@ -10,17 +10,14 @@ const [sidebar, setSidebar] = useState<boolean>(false)
 const toggleSidebar = () => {
   setSidebar(!sidebar)
 }
-
-
-return (
-  <div className="relative">
-    <Conversation sidebar={sidebar} toggleSidebar={toggleSidebar} />
-    <Nav toggleSidebar={toggleSidebar} />
-    <Chat />
-    <Form />
-  </div>
-);
-
+  return (
+    <div className="relative">
+        <Conversation sidebar={sidebar} toggleSidebar={toggleSidebar} />
+        <Nav toggleSidebar={toggleSidebar} />
+        <Chat />
+        <Form />
+    </div>
+  )
 }
 
 export default ChatWrapper
