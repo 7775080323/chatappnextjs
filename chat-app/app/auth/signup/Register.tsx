@@ -21,38 +21,35 @@ const Register = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-  
+
     // Validation checks
     if (!state.name.trim()) return setErrorMessage("Name is required.");
     if (!/^\S+@\S+\.\S+$/.test(state.email)) return setErrorMessage("Invalid email format.");
     if (state.password.length < 6) return setErrorMessage("Password must be at least 6 characters.");
-  
+
     setErrorMessage(null);
     setIsLoading(true); // Start loading
 
     try {
-      // Sending POST request to register the user
+      // Register user
       const response = await fetch("http://localhost:5000/api/user/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(state),
       });
 
-      // Check if response is OK
       if (!response.ok) {
         const errorData = await response.json();
         setErrorMessage(errorData.message || "Something went wrong.");
         return;
       }
 
-      // Parse the response data
       const responseData = await response.json();
-      console.log(responseData); // Debugging log to check the response
+      console.log(responseData); // Debugging log
 
       if (responseData.success) {
-        // Successfully registered, now redirect to sign-in page
+        // ✅ Redirect user to login page instead of auto-login
+        alert("Registration successful! Please log in.");
         router.push("/auth/signin");
       } else {
         setErrorMessage(responseData.message || "Something went wrong.");
@@ -71,6 +68,8 @@ const Register = () => {
       <div className="flex-1 flex h-screen items-center justify-center px-4">
         <form className="w-[90%]" onSubmit={handleSubmit}>
           <h1 className="text-xl font-semibold text-white capitalize mb-8">New user? Signup here!</h1>
+          
+          {/* Name Input */}
           <div>
             <input
               type="text"
@@ -81,6 +80,8 @@ const Register = () => {
               className="w-full h-14 rounded-lg outline-none px-4 bg-[#312F2F] text-white"
             />
           </div>
+
+          {/* Email Input */}
           <div className="mt-6">
             <input
               type="email"
@@ -91,6 +92,8 @@ const Register = () => {
               className="w-full h-14 rounded-lg outline-none px-4 bg-[#312F2F] text-white"
             />
           </div>
+
+          {/* Password Input */}
           <div className="mt-6">
             <input
               type="password"
@@ -101,16 +104,22 @@ const Register = () => {
               className="w-full h-14 rounded-lg outline-none px-4 bg-[#312F2F] text-white"
             />
           </div>
+
+          {/* Submit Button */}
           <div className="mt-6">
             <button
               type="submit"
               disabled={isLoading}
               className={`w-full block cursor-pointer bg-[#00FF38] text-black text-lg font-semibold capitalize h-14 px-4 rounded-lg ${isLoading && 'opacity-50'}`}
             >
-              {isLoading ? 'Signing up...' : 'Signup'}
+              {isLoading ? "Signing up..." : "Signup"}
             </button>
           </div>
+
+          {/* Error Message */}
           {errorMessage && <p className="text-red-500 mt-4">{errorMessage}</p>}
+
+          {/* Login Link */}
           <Link
             href="/auth/signin"
             className="inline-block mt-4 text-zinc-400 font-semibold hover:text-white focus:text-white"
